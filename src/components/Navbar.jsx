@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { ShoppingBag, Heart, Search, User, Menu, X, LogOut, Package, Settings } from 'lucide-react';
+import { ShoppingBag, Heart, Search, User, Menu, X, LogOut, Package, Settings, ClipboardList } from 'lucide-react';
 import { logout } from '../redux/authSlice';
 
-// IMPORTACIÓN DEL LOGO OFICIAL
-// Ajusta la ruta si tu archivo tiene otro nombre exacto (ej. .png o .svg)
 import logoAlgorithm from '../assets/algorithm4N-svg.png'; 
 
 const Navbar = () => {
@@ -30,38 +28,31 @@ const Navbar = () => {
     e.preventDefault();
     if (searchTerm.trim()) {
       console.log("Buscando:", searchTerm);
-      // Aquí podrías redirigir a una página de resultados
       // navigate(`/search?q=${searchTerm}`);
     }
   };
 
   return (
     <>
-      {/* 1. TOP BAR (Barra de Anuncios estilo Nike) */}
       <div className="bg-gray-100 text-center py-2 text-[11px] font-extrabold tracking-widest uppercase text-gray-900 hidden md:block">
         Envíos gratis en órdenes superiores a $999 MXN 🚀
       </div>
 
-      {/* 2. NAVBAR PRINCIPAL */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
-            {/* IZQUIERDA: Logo Oficial */}
             <Link to="/" className="flex-shrink-0 flex items-center gap-3 group">
-               {/* Logo SVG importado */}
               <img 
                 src={logoAlgorithm} 
                 alt="Algorithm Store Logo" 
                 className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
               />
-              {/* Texto Opcional */}
               <span className="font-bold text-xl tracking-tighter text-gray-900 font-mono hidden xl:block">
                 Algorithm<span className="text-blue-600">Store</span>
               </span>
             </Link>
 
-            {/* CENTRO: Navegación (Desktop) */}
             <div className="hidden md:flex space-x-8">
               {['Hombres', 'Mujeres', 'Nuevos', 'Ofertas'].map((item) => (
                 <Link 
@@ -70,16 +61,13 @@ const Navbar = () => {
                   className="text-gray-900 hover:text-blue-600 font-bold text-sm uppercase tracking-wide transition relative group py-2"
                 >
                   {item}
-                  {/* Animación de subrayado */}
                   <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               ))}
             </div>
 
-            {/* DERECHA: Utilidades */}
             <div className="flex items-center gap-2 lg:gap-4">
               
-              {/* Barra de Búsqueda (Pill Shape) */}
               <form onSubmit={handleSearch} className="hidden lg:flex items-center bg-gray-100 rounded-full px-4 py-2 w-48 focus-within:w-64 focus-within:bg-white focus-within:ring-1 focus-within:ring-gray-300 transition-all duration-300 group">
                 <Search size={18} className="text-gray-500 group-focus-within:text-black" />
                 <input 
@@ -91,17 +79,14 @@ const Navbar = () => {
                 />
               </form>
               
-              {/* Búsqueda Móvil */}
               <button className="lg:hidden p-2 hover:bg-gray-100 rounded-full text-gray-900">
                 <Search size={24} strokeWidth={1.5} />
               </button>
 
-              {/* Wishlist (Lista de Deseos) */}
               <Link to="/wishlist" className="p-2 hover:bg-gray-100 rounded-full transition relative group text-gray-900" title="Lista de Deseos">
                 <Heart size={24} strokeWidth={1.5} className="group-hover:text-red-600 transition-colors"/>
               </Link>
 
-              {/* Carrito */}
               <Link to="/cart" className="p-2 hover:bg-gray-100 rounded-full transition relative text-gray-900">
                 <ShoppingBag size={24} strokeWidth={1.5} />
                 {totalItems > 0 && (
@@ -111,7 +96,6 @@ const Navbar = () => {
                 )}
               </Link>
 
-              {/* Usuario / Login */}
               {isAuthenticated ? (
                 <div className="relative z-50">
                   <button 
@@ -121,14 +105,12 @@ const Navbar = () => {
                     <User size={24} strokeWidth={1.5} />
                   </button>
 
-                  {/* Dropdown de Usuario */}
                   {showUserMenu && (
                     <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 transform origin-top-right animate-in fade-in slide-in-from-top-2">
                       <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
                         <p className="text-sm font-bold text-gray-900">Hola, {user?.firstName || 'Usuario'}</p>
                         <p className="text-xs text-gray-500 font-medium truncate">{user?.email}</p>
                         
-                        {/* --- NUEVO: ETIQUETA DE ADMIN --- */}
                         {user?.role === 'ROLE_ADMIN' && (
                            <span className="mt-1 inline-block bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                              Administrador
@@ -137,12 +119,18 @@ const Navbar = () => {
                       </div>
                       
                       <div className="py-2">
-                        {/* --- NUEVO: ENLACE AL PANEL DE ADMIN --- */}
+                        {/* --- SECCIÓN DE ADMIN --- */}
                         {user?.role === 'ROLE_ADMIN' && (
-                          <Link to="/admin" className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-purple-700 hover:bg-purple-50 transition" onClick={() => setShowUserMenu(false)}>
-                            <Settings size={18} strokeWidth={2} /> Panel de Control
-                          </Link>
+                          <div className="border-b border-gray-100 mb-2 pb-2">
+                              <Link to="/admin" className="flex items-center gap-3 px-5 py-2 text-sm font-bold text-purple-700 hover:bg-purple-50 transition" onClick={() => setShowUserMenu(false)}>
+                                <Settings size={18} strokeWidth={2} /> Productos
+                              </Link>
+                              <Link to="/admin/orders" className="flex items-center gap-3 px-5 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50 transition" onClick={() => setShowUserMenu(false)}>
+                                <ClipboardList size={18} strokeWidth={2} /> Ventas / Pedidos
+                              </Link>
+                          </div>
                         )}
+                        {/* ----------------------- */}
 
                         <Link to="/profile" className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition" onClick={() => setShowUserMenu(false)}>
                           <User size={18} strokeWidth={1.5} /> Mi Cuenta
@@ -172,7 +160,6 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {/* Botón Menú Móvil */}
               <button 
                 className="md:hidden p-2 text-gray-900"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -183,7 +170,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* MENÚ MÓVIL (Desplegable) */}
         {isMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-100 px-4 py-6 space-y-2 shadow-2xl absolute w-full left-0 z-40">
               {['Hombres', 'Mujeres', 'Nuevos', 'Ofertas'].map((item) => (
