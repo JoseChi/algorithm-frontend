@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ShoppingBag, Heart, Search, User, Menu, X, LogOut, Package, Settings, ClipboardList } from 'lucide-react';
 import { logout } from '../redux/authSlice';
+// Actualizacion menu admin
 
 import logoAlgorithm from '../assets/algorithm4N-svg.png'; 
 
