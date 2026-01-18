@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { loginSuccess } from '../redux/authSlice';
 import api from '../services/api';
 import { User, Lock, Loader2 } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
+import { toast } from 'react-toastify';
 
-// --- NUEVA FUNCIÓN MÁGICA ---
-// Esta función toma el token encriptado y lee la información oculta (ID, rol, exp, etc.)
+// --- FUNCIÓN PARA LEER TOKENS (JWT) ---
 function parseJwt(token) {
     try {
         if (!token) return null;
@@ -34,6 +35,51 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // --- 2. MANEJADOR DE ÉXITO DE GOOGLE (CONECTADO AL BACKEND) ---
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (credentialResponse.credential) {
+        try {
+            setLoading(true);
+            console.log("Token de Google recibido. Enviando al backend...");
+
+            // A. Enviamos el token de Google a tu Java
+            const res = await api.post('/auth/google', { token: credentialResponse.credential });
+            
+            console.log("Respuesta del Backend:", res.data);
+
+            // B. Java nos devuelve nuestro propio Token y los datos del usuario
+            // (Como actualizamos el AuthController, ahora java nos manda el ID y Role directos)
+            const { token, id, username, role } = res.data;
+
+            // C. Guardamos en Redux
+            const userData = {
+                token: token,
+                user: { 
+                    id: id, 
+                    username: username, 
+                    role: role 
+                }
+            };
+
+            dispatch(loginSuccess(userData));
+            toast.success(`¡Bienvenido ${username}! 🚀`);
+            navigate('/');
+
+        } catch (err) {
+            console.error("Error en login con Google:", err);
+            toast.error("Error al conectar con el servidor.");
+        } finally {
+            setLoading(false);
+        }
+    }
+  };
+
+  const handleGoogleError = () => {
+      console.error("Falló el inicio de sesión con Google");
+      toast.error("No se pudo iniciar sesión con Google.");
+  };
+
+  // --- MANEJADOR DE LOGIN NORMAL ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -42,40 +88,24 @@ const Login = () => {
     try {
       console.log("Enviando credenciales...", formData); 
       const response = await api.post('/auth/login', formData);
-
       console.log("Respuesta cruda del Backend:", response.data);
 
-      // 1. Obtenemos el token
       const token = response.data.token || response.data.accessToken;
 
-      if (!token) {
-          throw new Error("El servidor no devolvió un token de acceso.");
-      }
+      if (!token) throw new Error("El servidor no devolvió un token de acceso.");
 
-      // 2. INTENTO DE RECUPERACIÓN DE ID
-      // Estrategia A: ¿Viene directo en el JSON?
       let userId = response.data.id || response.data.userId || response.data.user?.id;
 
-      // Estrategia B: Si no viene directo, lo buscamos DENTRO del token
       if (!userId) {
-          console.log("ID no encontrado en respuesta directa. Buscando dentro del token...");
           const decodedToken = parseJwt(token);
-          console.log("Token Decodificado:", decodedToken); // <--- MIRA ESTE LOG EN CONSOLA
-
-          // Busca propiedades comunes donde Spring Boot guarda el ID
           userId = decodedToken?.id || decodedToken?.userId || decodedToken?.sub; 
-          
-          // NOTA: A veces 'sub' es el username, no el ID. 
-          // Si decodedToken.id es undefined, tu Backend Java necesita ajustes.
       }
 
       if (!userId) {
          console.error("❌ ERROR CRÍTICO: Imposible encontrar el ID del usuario.");
-         setError("Error técnico: El sistema no pudo identificar tu usuario. Contacta soporte.");
+         setError("Error técnico: El sistema no pudo identificar tu usuario.");
          return; 
       }
-
-      console.log(`✅ ID Encontrado: ${userId}`);
 
       const userData = {
         token: token,
@@ -122,7 +152,7 @@ const Login = () => {
                 type="text"
                 name="username" 
                 required
-                className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"
+                className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition"
                 placeholder="Ej. usuario_prueba_2"
                 value={formData.username}
                 onChange={handleChange}
@@ -140,7 +170,7 @@ const Login = () => {
                 type="password"
                 name="password"
                 required
-                className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"
+                className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
@@ -156,6 +186,32 @@ const Login = () => {
             {loading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
           </button>
         </form>
+
+        {/* --- 3. SECCIÓN DE GOOGLE CON DISEÑO --- */}
+        <div className="mt-6">
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500 font-medium">O continúa con</span>
+                </div>
+            </div>
+
+            <div className="mt-6 flex justify-center w-full">
+                <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="outline"
+                    size="large"
+                    shape="rectangular"
+                    width="100%" 
+                    text="continue_with"
+                    locale="es"
+                />
+            </div>
+        </div>
+        {/* ------------------------------------- */}
 
         <div className="mt-6 text-center text-sm text-gray-500">
           ¿No tienes cuenta?{' '}
